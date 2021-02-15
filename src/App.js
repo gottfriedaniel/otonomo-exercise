@@ -1,40 +1,51 @@
 import React, { Component } from 'react'
-import logo from './logo.svg'
 import './App.css'
-import createStreamerFrom from './api/streamer'
-import generateCarData from './api/data-generator'
+import WatchList from './components/WatchList'
+import EventsList from './components/EventsList'
+import { addNewStreamer } from './services/utils'
+import createRandomColor from './dom-utils/colors'
 
 class App extends Component {
-  streamer = createStreamerFrom(() => generateCarData('12345678901234567'))
 
-  state = { carData: {} }
+  state = {
+    streamers: {}
+  }
 
   updateState = carData => {
-    this.setState({ carData })
+    const {streamers} = { ...this.state };
+    streamers[carData.vin].carData = carData;
+    this.setState({streamers})
   }
 
   componentDidMount() {
-    this.streamer.subscribe(this.updateState)
-    this.streamer.start()
+    this.addCarToWatchList('12345678901234567'); // Initial value just for an example
+  }
+
+  componentWillUnmount () {
+    const {streamers} = this.state;
+    Object.values(streamers).forEach(s => s.streamer.removeHandler(this.updateState))
+  }
+
+  toggleCarWatchList = (car, value) => {
+    let streamers = { ...this.state.streamers};
+    streamers[car].watched = value;
+    value ? streamers[car].streamer.start() : streamers[car].streamer.stop();
+    this.setState({ streamers })
+  }
+
+  addCarToWatchList = (vin) => {
+    const carStreamer = addNewStreamer(vin, this.updateState)
+    let streamers = { ...this.state.streamers};
+    streamers[vin] = { streamer: carStreamer, events: [], watched: true, color: createRandomColor() };
+    this.setState({streamers})
   }
 
   render() {
+    const {streamers} = this.state;
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-            {JSON.stringify(this.state.carData)}
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer">
-            Learn React
-          </a>
-        </header>
+          <WatchList cars={streamers} toggleCarWatchList={this.toggleCarWatchList} addCarToWatchList={this.addCarToWatchList} />
+          <EventsList streamers={streamers} />
       </div>
     )
   }

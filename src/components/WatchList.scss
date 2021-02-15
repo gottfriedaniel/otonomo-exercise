@@ -1,0 +1,15 @@
+.watch-list {
+  flex: 1;
+  padding: 1em;
+  .vin-input {
+    padding: .5em 1em;
+  }
+  .add-button {
+    margin: 0 0.5em;
+  }
+  .car {
+    margin: 0.5em 0;
+    font-size: 1.2em;
+    font-weight: 600;
+  }
+}
